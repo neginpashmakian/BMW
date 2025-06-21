@@ -30,13 +30,24 @@ exports.filterData = async (req, res) => {
   const { field, operator, value } = req.body;
   const query = {};
 
-  if (operator === "contains") query[field] = { $regex: value, $options: "i" };
-  else if (operator === "equals") query[field] = value;
-  else if (operator === "starts with")
-    query[field] = { $regex: "^" + value, $options: "i" };
-  else if (operator === "ends with")
-    query[field] = { $regex: value + "$", $options: "i" };
-  else if (operator === "is empty") query[field] = "";
+  const fieldName = field.toLowerCase(); // Normalize field
+  const isNumericField = ["range_km"].includes(fieldName); // You can expand this
+
+  if (isNumericField) {
+    if (operator === "equals") {
+      query[fieldName] = Number(value);
+    }
+    // You can add support for >, <, >=, etc. here later
+  } else {
+    if (operator === "contains")
+      query[fieldName] = { $regex: value, $options: "i" };
+    else if (operator === "equals") query[fieldName] = value;
+    else if (operator === "starts with")
+      query[fieldName] = { $regex: "^" + value, $options: "i" };
+    else if (operator === "ends with")
+      query[fieldName] = { $regex: value + "$", $options: "i" };
+    else if (operator === "is empty") query[fieldName] = "";
+  }
 
   const data = await CarData.find(query);
   res.json(data);

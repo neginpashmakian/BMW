@@ -25,7 +25,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
   const fieldMap: Record<string, string> = {
     Brand: "Brand",
     Model: "Model",
-    Range_km: "Range_km",
+    Range_km: "Range_Km",
   };
 
   const fields = Object.keys(fieldMap);
@@ -67,14 +67,17 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     }
   };
 
+  // ✅ Responsive column layout using `flex`
   const columns = [
-    { field: "Brand", headerName: "Brand", width: 150 },
-    { field: "Model", headerName: "Model", width: 250 },
-    { field: "Range_km", headerName: "Range (km)", width: 150 },
+    { field: "Brand", headerName: "Brand", flex: 1 },
+    { field: "Model", headerName: "Model", flex: 2 },
+    { field: "Range_Km", headerName: "Range (km)", flex: 1 },
     {
       field: "details",
       headerName: "Details",
-      width: 150,
+      flex: 1,
+      sortable: false,
+      filterable: false,
       renderCell: (params: any) => (
         <Button
           variant="outlined"
@@ -96,7 +99,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
         mt: 4,
       }}
     >
-      <Box sx={{ width: "90%", maxWidth: 1000 }}>
+      <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto" }}>
         <Typography variant="h5" gutterBottom color="primary">
           Electric Car Dashboard
         </Typography>
@@ -162,6 +165,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               setField("Brand");
               setOperator("contains");
               setValue("");
+              setSearchTerm("");
             }}
           >
             Reset
@@ -172,10 +176,10 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
         <DataGrid
           rows={filteredData.map((car) => ({ id: car._id, ...car }))}
           columns={columns}
+          disableColumnMenu
           initialState={{
             pagination: { paginationModel: { pageSize: 10, page: 0 } },
           }}
-          disableColumnMenu
           pageSizeOptions={[10]}
           disableRowSelectionOnClick
           autoHeight

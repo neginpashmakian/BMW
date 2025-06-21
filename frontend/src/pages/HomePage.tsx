@@ -1,4 +1,4 @@
-import { Container, Typography } from "@mui/material";
+import { Container } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import DataGridTable from "../components/DataGridTable";
@@ -20,9 +20,6 @@ export default function HomePage() {
 
   return (
     <Container sx={{ mt: 5 }}>
-      <Typography variant="h4" color="primary" gutterBottom>
-        Electric Car Dashboard
-      </Typography>
       <DataGridTable cars={cars} /> {/* ✅ pass data to table */}
     </Container>
   );

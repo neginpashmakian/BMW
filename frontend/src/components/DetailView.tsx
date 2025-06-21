@@ -1,36 +1,105 @@
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
+import { Box, Button, Card, Divider, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 export default function DetailView({ car }: { car: any }) {
   const navigate = useNavigate();
 
-  return (
-    <Card sx={{ maxWidth: 800, mx: "auto", mt: 5 }}>
-      <CardContent>
-        <Typography variant="h5" gutterBottom color="primary">
-          {car.Brand} – {car.Model}
-        </Typography>
+  const leftFields = [
+    "AccelSec",
+    "Range_Km",
+    "FastCharge_KmH",
+    "PowerTrain",
+    "BodyStyle",
+    "Seats",
+    "Date",
+  ];
 
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
-          {Object.entries(car).map(([key, value]) =>
-            key === "_id" || key === "__v" ? null : (
-              <Box key={key} sx={{ width: "48%" }}>
-                <Typography variant="body2" color="textSecondary">
-                  <strong>{key}</strong>: {String(value)}
-                </Typography>
-              </Box>
-            )
-          )}
+  const rightFields = [
+    "TopSpeed_KmH",
+    "Efficiency_WhKm",
+    "RapidCharge",
+    "PlugType",
+    "Segment",
+    "PriceEuro",
+  ];
+
+  const formatLabel = (label: string) =>
+    label
+      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/\b(KmH|WhKm|Km|Euro)\b/g, (match) =>
+        match.replace(/([a-z])/, (m) => m.toUpperCase())
+      )
+      .trim();
+
+  return (
+    <Card
+      sx={{
+        maxWidth: 900,
+        mx: "auto",
+        my: 5,
+        px: 4,
+        py: 4,
+        boxShadow: 5,
+        borderRadius: 3,
+        backgroundColor: "#f9f9f9",
+      }}
+    >
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ color: "#1c69d4", fontWeight: "bold" }}
+      >
+        {car.Brand} – {car.Model}
+      </Typography>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          columnGap: 4,
+          rowGap: 1.5,
+        }}
+      >
+        <Box sx={{ flex: "1 1 300px" }}>
+          {leftFields.map((key) => (
+            <Typography key={key} variant="body1" sx={{ mb: 1, color: "#333" }}>
+              <strong>{formatLabel(key)}:</strong>{" "}
+              {car[key] !== undefined ? car[key] : "-"}
+            </Typography>
+          ))}
         </Box>
 
+        <Box sx={{ flex: "1 1 300px" }}>
+          {rightFields.map((key) => (
+            <Typography key={key} variant="body1" sx={{ mb: 1, color: "#333" }}>
+              <strong>{formatLabel(key)}:</strong>{" "}
+              {car[key] !== undefined ? car[key] : "-"}
+            </Typography>
+          ))}
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Box textAlign="center">
         <Button
           variant="contained"
-          sx={{ mt: 3 }}
+          sx={{
+            backgroundColor: "#1c69d4",
+            px: 5,
+            py: 1,
+            fontWeight: "bold",
+            borderRadius: 2,
+          }}
           onClick={() => navigate("/")}
         >
-          Back
+          BACK
         </Button>
-      </CardContent>
+      </Box>
     </Card>
   );
 }

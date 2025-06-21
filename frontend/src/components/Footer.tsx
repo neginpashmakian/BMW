@@ -1,7 +1,17 @@
 // components/Footer.tsx
-import { Box, Link, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Link,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 
 export default function Footer() {
+  const theme = useTheme();
+  const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <Box
       component="footer"
@@ -18,7 +28,14 @@ export default function Footer() {
         Negin Pashmakian – Frontend Developer
       </Typography>
 
-      <Stack direction="row" spacing={2} justifyContent="center" mt={1}>
+      <Stack
+        direction="row"
+        justifyContent="center"
+        spacing={2}
+        mt={1}
+        flexWrap="wrap"
+        useFlexGap
+      >
         <Link
           href="mailto:neginpashmakian6@gmail.com"
           underline="hover"

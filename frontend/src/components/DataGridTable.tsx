@@ -58,8 +58,8 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               car.Model?.toLowerCase().includes(lower)
           )
         : cars;
-      // setFilteredData(result);
-      // setLoading(false);
+      setFilteredData(result);
+      setLoading(false);
     }, 300);
     return () => clearTimeout(timeout);
   }, [searchTerm, cars]);

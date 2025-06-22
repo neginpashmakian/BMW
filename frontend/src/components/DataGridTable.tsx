@@ -1,8 +1,11 @@
+// DataGridTable.tsx
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   Box,
   Button,
+  CircularProgress,
   MenuItem,
   Paper,
   Stack,
@@ -10,8 +13,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import type { ColumnMenuTab } from "ag-grid-community";
 import {
   ClientSideRowModelModule,
+  ColDef,
   GridApi,
   GridReadyEvent,
   ModuleRegistry,
@@ -28,19 +33,18 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
   const navigate = useNavigate();
   const gridRef = useRef<AgGridReact>(null);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
-
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [field, setField] = useState("Brand");
   const [operator, setOperator] = useState("contains");
   const [value, setValue] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const fieldMap: Record<string, string> = {
     Brand: "Brand",
     Model: "Model",
     Range_km: "Range_Km",
   };
-
   const fields = Object.keys(fieldMap);
   const operators = [
     "contains",
@@ -50,9 +54,13 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     "is empty",
   ];
 
-  const showLoading = () => gridApi?.showLoadingOverlay();
-  const hideOverlay = () => gridApi?.hideOverlay();
+  const showLoading = () => setIsLoading(true);
+  const hideOverlay = () => {
+    setIsLoading(false);
+    gridApi?.hideOverlay();
+  };
 
+  // Local search filter
   useEffect(() => {
     if (!gridApi) return;
     showLoading();
@@ -67,7 +75,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
         : cars;
       setFilteredData(result);
       hideOverlay();
-    }, 300);
+    }, 400);
     return () => clearTimeout(timeout);
   }, [searchTerm, cars, gridApi]);
 
@@ -75,19 +83,15 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     if (!gridApi) return;
     showLoading();
     try {
-      const response = await fetch("http://127.0.0.1:5000/data/filter", {
+      const resp = await fetch("http://127.0.0.1:5000/data/filter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          field: fieldMap[field],
-          operator,
-          value,
-        }),
+        body: JSON.stringify({ field: fieldMap[field], operator, value }),
       });
-      const data = await response.json();
+      const data = await resp.json();
       setFilteredData(data);
     } catch (err) {
-      console.error("Backend filter error:", err);
+      console.error(err);
     } finally {
       hideOverlay();
     }
@@ -97,26 +101,39 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     setFilteredData((prev) => prev.filter((row) => row._id !== id));
   };
 
-  const columnDefs = useMemo(() => {
+  const columnDefs: ColDef[] = useMemo(() => {
     if (!filteredData.length) return [];
-
     const dynamicCols = Object.keys(filteredData[0])
       .filter((key) => key !== "_id")
-      .map((key) => ({
-        field: key,
-        headerName: key.replace(/_/g, " "),
-        sortable: true,
-        filter: true,
-        resizable: true,
-        tooltipField: key,
-        flex: 1,
-        minWidth: 120,
-      }));
-
+      .map(
+        (key): ColDef => ({
+          field: key,
+          headerName: key.replace(/_/g, " "),
+          headerTooltip: key.replace(/_/g, " "),
+          sortable: true,
+          filter: true,
+          resizable: true,
+          tooltipField: key,
+          flex: 1,
+          minWidth: 120,
+          suppressMovable: false, // ▶️ Allow dragging
+          menuTabs: [
+            "filterMenuTab",
+            "generalMenuTab",
+            "columnsMenuTab",
+          ] as ColumnMenuTab[],
+          cellRenderer: (params: any) => (
+            <Tooltip title={params.value}>
+              <span>{params.value}</span>
+            </Tooltip>
+          ),
+        })
+      );
     return [
       ...dynamicCols,
       {
         headerName: "Actions",
+
         cellRenderer: (params: any) => (
           <Stack direction="row" spacing={1}>
             <Tooltip title="View Details">
@@ -124,6 +141,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 size="small"
                 color="primary"
                 onClick={() => navigate(`/detail/${params.data._id}`)}
+                sx={{
+                  color: "#102067",
+                }}
               >
                 <VisibilityIcon fontSize="small" />
               </Button>
@@ -133,6 +153,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 size="small"
                 color="error"
                 onClick={() => handleDelete(params.data._id)}
+                sx={{
+                  color: "#5d0d0d",
+                }}
               >
                 <DeleteIcon fontSize="small" />
               </Button>
@@ -140,7 +163,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           </Stack>
         ),
         width: 150,
-        pinned: "right" as const,
+        pinned: "right",
         suppressSizeToFit: true,
       },
     ];
@@ -172,24 +195,18 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           backgroundColor: "#f9f9f9",
         }}
       >
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ fontWeight: "bold", color: "#1c69d4" }}
-        >
+        <Typography variant="h5" sx={{ fontWeight: "bold", color: "#0e366e" }}>
           Electric Car Dashboard
         </Typography>
-
+        {/* FILTER UI */}
         <TextField
-          fullWidth
-          variant="outlined"
-          size="small"
           label="Search by Brand or Model"
+          fullWidth
+          size="small"
+          sx={{ mb: 3 }}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 3 }}
         />
-
         <Stack
           spacing={2}
           direction={{ xs: "column", sm: "row" }}
@@ -211,7 +228,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             select
             label="Operator"
@@ -226,7 +242,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               </MenuItem>
             ))}
           </TextField>
-
           {operator !== "is empty" && (
             <TextField
               label="Value"
@@ -236,15 +251,13 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               sx={{ minWidth: 150 }}
             />
           )}
-
           <Button
             variant="contained"
-            sx={{ backgroundColor: "#1c69d4", minWidth: 100 }}
+            sx={{ backgroundColor: "#0e366e", minWidth: 100 }}
             onClick={handleBackendFilter}
           >
             Filter
           </Button>
-
           <Button
             variant="outlined"
             sx={{ minWidth: 100 }}
@@ -260,7 +273,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             Reset
           </Button>
         </Stack>
-
+        {/* AG Grid */}
         <Box sx={{ width: "100%", overflow: "hidden" }}>
           <Box
             className="ag-theme-alpine"
@@ -270,25 +283,54 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               fontFamily: `"Roboto", "Helvetica Neue", "Arial", sans-serif`,
               fontSize: "13px",
               borderRadius: 2,
-              overflow: "hidden",
-              "& .ag-cell": {
-                color: "#3e3e3e",
-                fontWeight: 400,
-                borderBottom: "1px solid #f0f0f0",
+              position: "relative",
+              "& .ag-header-cell": {
+                overflow: "visible",
+                paddingRight: "24px", // space for menu icon
               },
               "& .ag-header-cell-label": {
-                color: "#1f1f1f",
-                fontWeight: 600,
-                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                overflow: "visible",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               },
-              "& .ag-row:hover .ag-cell": {
-                backgroundColor: "#f4f4f4",
-              },
-              "& .ag-paging-panel": {
-                borderTop: "1px solid #f0f0f0",
+              "& .ag-header-cell .ag-header-cell-menu-button": {
+                opacity: 1,
+                visibility: "visible",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "16px",
+                height: "16px",
+                marginLeft: "4px",
               },
             }}
           >
+            {isLoading && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  zIndex: 2,
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(255,255,255,0.7)",
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                <CircularProgress
+                  size={40}
+                  thickness={4}
+                  sx={{ color: "#1c69d4" }}
+                />
+              </Box>
+            )}
             <AgGridReact
               ref={gridRef}
               onGridReady={onGridReady}
@@ -298,12 +340,24 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 sortable: true,
                 filter: true,
                 resizable: true,
+                tooltipComponent: "agTooltipComponent",
+                menuTabs: [
+                  "filterMenuTab",
+                  "generalMenuTab",
+                  "columnsMenuTab",
+                ] as ColumnMenuTab[],
+                suppressMovable: false,
               }}
               animateRows
               pagination
               paginationPageSize={10}
               suppressDragLeaveHidesColumns
+              suppressMenuHide={true} // ← ensures legacy menu icon always visible
+              columnMenu="legacy" // ← use legacy tabbed menu
               domLayout="normal"
+              overlayNoRowsTemplate={
+                isLoading ? "<span></span>" : "<span>No data available.</span>"
+              }
             />
           </Box>
         </Box>

@@ -1,26 +1,32 @@
 import { Container } from "@mui/material";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DataGridTable from "../components/DataGridTable";
 
-export default function HomePage() {
+// Add toggleTheme prop to the component
+export default function HomePage({ toggleTheme }: { toggleTheme: () => void }) {
   const [cars, setCars] = useState([]);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/data"); // ✅ correct backend URL
-        setCars(res.data); // ✅ state set here
+        const res = await axios.get("http://127.0.0.1:5000/data");
+        setCars(res.data);
       } catch (err) {
         console.error("Failed to fetch cars", err);
       }
     };
+
     fetchData();
   }, []);
 
   return (
     <Container sx={{ mt: 5 }}>
-      <DataGridTable cars={cars} /> {/* ✅ pass data to table */}
+      <DataGridTable cars={cars} />
     </Container>
   );
 }

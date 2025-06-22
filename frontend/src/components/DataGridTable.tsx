@@ -10,26 +10,30 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ClientSideRowModelModule, ModuleRegistry } from "ag-grid-community";
+import {
+  ClientSideRowModelModule,
+  GridApi,
+  GridReadyEvent,
+  ModuleRegistry,
+} from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import { AgGridReact } from "ag-grid-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ✅ Register necessary modules for AG Grid
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 export default function DataGridTable({ cars }: { cars: any[] }) {
   const navigate = useNavigate();
   const gridRef = useRef<AgGridReact>(null);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
 
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [field, setField] = useState("Brand");
   const [operator, setOperator] = useState("contains");
   const [value, setValue] = useState("");
-  const [loading, setLoading] = useState(true);
 
   const fieldMap: Record<string, string> = {
     Brand: "Brand",
@@ -46,9 +50,12 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     "is empty",
   ];
 
-  // ✅ Filter logic (simulate loading + search)
+  const showLoading = () => gridApi?.showLoadingOverlay();
+  const hideOverlay = () => gridApi?.hideOverlay();
+
   useEffect(() => {
-    setLoading(true);
+    if (!gridApi) return;
+    showLoading();
     const timeout = setTimeout(() => {
       const lower = searchTerm.toLowerCase();
       const result = searchTerm
@@ -59,14 +66,15 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           )
         : cars;
       setFilteredData(result);
-      setLoading(false);
+      hideOverlay();
     }, 300);
     return () => clearTimeout(timeout);
-  }, [searchTerm, cars]);
+  }, [searchTerm, cars, gridApi]);
 
   const handleBackendFilter = async () => {
+    if (!gridApi) return;
+    showLoading();
     try {
-      setLoading(true);
       const response = await fetch("http://127.0.0.1:5000/data/filter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +89,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     } catch (err) {
       console.error("Backend filter error:", err);
     } finally {
-      setLoading(false);
+      hideOverlay();
     }
   };
 
@@ -89,7 +97,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     setFilteredData((prev) => prev.filter((row) => row._id !== id));
   };
 
-  // ✅ AG Grid column definition
   const columnDefs = useMemo(() => {
     if (!filteredData.length) return [];
 
@@ -137,7 +144,12 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
         suppressSizeToFit: true,
       },
     ];
-  }, [filteredData]);
+  }, [filteredData, navigate]);
+
+  const onGridReady = (params: GridReadyEvent) => {
+    setGridApi(params.api);
+    params.api.showLoadingOverlay();
+  };
 
   return (
     <Box
@@ -242,6 +254,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               setOperator("contains");
               setValue("");
               setSearchTerm("");
+              gridApi?.hideOverlay();
             }}
           >
             Reset
@@ -252,48 +265,33 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           <Box
             className="ag-theme-alpine"
             sx={{
-              height: 400,
+              height: 500,
               width: "100%",
               fontFamily: `"Roboto", "Helvetica Neue", "Arial", sans-serif`,
               fontSize: "13px",
               borderRadius: 2,
               overflow: "hidden",
-
-              // Light gray cell text
               "& .ag-cell": {
                 color: "#3e3e3e",
                 fontWeight: 400,
-                lineHeight: "1.5rem",
                 borderBottom: "1px solid #f0f0f0",
               },
-
-              // Header font and style
               "& .ag-header-cell-label": {
                 color: "#1f1f1f",
                 fontWeight: 600,
                 fontSize: "13px",
               },
-
-              // Remove inner borders for a softer look
-              "& .ag-root-wrapper, .ag-cell, .ag-header-cell": {
-                border: "none",
-              },
-
-              // Row hover
               "& .ag-row:hover .ag-cell": {
-                backgroundColor: "#f9f9f9",
+                backgroundColor: "#f4f4f4",
               },
-
-              // Pagination styling (optional)
               "& .ag-paging-panel": {
                 borderTop: "1px solid #f0f0f0",
-                fontSize: "12px",
-                color: "#5e5e5e",
               },
             }}
           >
             <AgGridReact
               ref={gridRef}
+              onGridReady={onGridReady}
               rowData={filteredData}
               columnDefs={columnDefs}
               defaultColDef={{
@@ -301,10 +299,11 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 filter: true,
                 resizable: true,
               }}
-              animateRows={true}
-              domLayout="normal"
-              pagination={true}
+              animateRows
+              pagination
               paginationPageSize={10}
+              suppressDragLeaveHidesColumns
+              domLayout="normal"
             />
           </Box>
         </Box>

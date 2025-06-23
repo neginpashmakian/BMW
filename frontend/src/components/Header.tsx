@@ -17,7 +17,13 @@ export default function Header({ toggleTheme }: { toggleTheme: () => void }) {
   return (
     <AppBar
       position="static"
-      sx={{ backgroundColor: theme.palette.primary.main, mb: 4 }}
+      sx={{
+        mb: 4,
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? "#0a192f" // 🎨 your custom dark mode header color
+            : theme.palette.primary.main, // 💡 default light mode color
+      }}
     >
       <Toolbar
         sx={{

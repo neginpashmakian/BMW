@@ -1,4 +1,4 @@
-// DataGridTable.tsx
+// DataGridTable.tsx – Dark mode compatible
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -12,6 +12,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 import type { ColumnMenuTab } from "ag-grid-community";
 import {
@@ -30,6 +31,7 @@ import { useNavigate } from "react-router-dom";
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 export default function DataGridTable({ cars }: { cars: any[] }) {
+  const theme = useTheme();
   const navigate = useNavigate();
   const gridRef = useRef<AgGridReact>(null);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -44,6 +46,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     Brand: "Brand",
     Model: "Model",
     Range_km: "Range_Km",
+    PowerTrain: "Power_Train",
+    Range_Km: "Range_Km",
+    Efficiency_WhKm: "Efficiency_WhKm",
   };
   const fields = Object.keys(fieldMap);
   const operators = [
@@ -60,7 +65,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     gridApi?.hideOverlay();
   };
 
-  // Local search filter
   useEffect(() => {
     if (!gridApi) return;
     showLoading();
@@ -83,7 +87,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
     if (!gridApi) return;
     showLoading();
     try {
-      const resp = await fetch("http://127.0.0.1:5000/data/filter", {
+      const resp = await fetch("http://127.0.0.1:5050/data/filter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ field: fieldMap[field], operator, value }),
@@ -103,6 +107,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
 
   const columnDefs: ColDef[] = useMemo(() => {
     if (!filteredData.length) return [];
+
     const dynamicCols = Object.keys(filteredData[0])
       .filter((key) => key !== "_id")
       .map(
@@ -116,7 +121,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           tooltipField: key,
           flex: 1,
           minWidth: 120,
-          suppressMovable: false, // ▶️ Allow dragging
+          suppressMovable: false,
           menuTabs: [
             "filterMenuTab",
             "generalMenuTab",
@@ -129,11 +134,21 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           ),
         })
       );
+
     return [
+      {
+        headerName: "#",
+        valueGetter: "node.rowIndex + 1",
+        width: 60,
+        cellClass: "row-number-cell",
+        suppressMovable: true,
+        sortable: false,
+        filter: false,
+        pinned: "left",
+      },
       ...dynamicCols,
       {
         headerName: "Actions",
-
         cellRenderer: (params: any) => (
           <Stack direction="row" spacing={1}>
             <Tooltip title="View Details">
@@ -141,9 +156,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 size="small"
                 color="primary"
                 onClick={() => navigate(`/detail/${params.data._id}`)}
-                sx={{
-                  color: "#102067",
-                }}
+                sx={{ color: "#1f415d" }}
               >
                 <VisibilityIcon fontSize="small" />
               </Button>
@@ -153,9 +166,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 size="small"
                 color="error"
                 onClick={() => handleDelete(params.data._id)}
-                sx={{
-                  color: "#5d0d0d",
-                }}
+                sx={{ color: "#7b2b29" }}
               >
                 <DeleteIcon fontSize="small" />
               </Button>
@@ -180,7 +191,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
         width: "100%",
         display: "flex",
         justifyContent: "center",
-        mt: 4,
         px: 2,
       }}
     >
@@ -192,13 +202,21 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           px: 4,
           py: 4,
           borderRadius: 3,
-          backgroundColor: "#f9f9f9",
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: "bold", color: "#0e366e" }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: "bold",
+            color: theme.palette.text.primary,
+            paddingBottom: 2,
+          }}
+        >
           Electric Car Dashboard
         </Typography>
-        {/* FILTER UI */}
+
         <TextField
           label="Search by Brand or Model"
           fullWidth
@@ -207,6 +225,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+
         <Stack
           spacing={2}
           direction={{ xs: "column", sm: "row" }}
@@ -220,7 +239,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             value={field}
             onChange={(e) => setField(e.target.value)}
             size="small"
-            sx={{ minWidth: 150 }}
           >
             {fields.map((f) => (
               <MenuItem key={f} value={f}>
@@ -234,7 +252,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             value={operator}
             onChange={(e) => setOperator(e.target.value)}
             size="small"
-            sx={{ minWidth: 150 }}
           >
             {operators.map((op) => (
               <MenuItem key={op} value={op}>
@@ -248,18 +265,27 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               size="small"
-              sx={{ minWidth: 150 }}
             />
           )}
           <Button
             variant="contained"
-            sx={{ backgroundColor: "#0e366e", minWidth: 100 }}
+            sx={{
+              minWidth: 100,
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#264B8C" : "#1976d2", // dark : light
+              color: "#fff",
+              "&:hover": {
+                backgroundColor:
+                  theme.palette.mode === "dark" ? "#1e3a6b" : "#1565c0", // hover colors
+              },
+            }}
             onClick={handleBackendFilter}
           >
             Filter
           </Button>
           <Button
             variant="outlined"
+            color="inherit"
             sx={{ minWidth: 100 }}
             onClick={() => {
               setFilteredData(cars);
@@ -273,39 +299,51 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             Reset
           </Button>
         </Stack>
-        {/* AG Grid */}
+
         <Box sx={{ width: "100%", overflow: "hidden" }}>
           <Box
             className="ag-theme-alpine"
             sx={{
-              height: 500,
+              height: 400,
               width: "100%",
-              fontFamily: `"Roboto", "Helvetica Neue", "Arial", sans-serif`,
+              fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
               fontSize: "13px",
+
               borderRadius: 2,
-              position: "relative",
-              "& .ag-header-cell": {
-                overflow: "visible",
-                paddingRight: "24px", // space for menu icon
-              },
-              "& .ag-header-cell-label": {
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                overflow: "visible",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              },
-              "& .ag-header-cell .ag-header-cell-menu-button": {
-                opacity: 1,
-                visibility: "visible",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "16px",
-                height: "16px",
-                marginLeft: "4px",
-              },
+
+              ...(theme.palette.mode === "dark"
+                ? {
+                    color: theme.palette.text.primary,
+                    backgroundColor: theme.palette.background.default,
+                    "& .ag-header": {
+                      backgroundColor: theme.palette.background.paper,
+                    },
+                    "& .ag-header-cell": {
+                      backgroundColor: theme.palette.background.paper,
+                      color: theme.palette.text.primary,
+                      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+                    },
+                    "& .ag-cell, & .ag-header-cell-label, & .ag-header-cell": {
+                      color: "#fff",
+                    },
+                    "& .ag-row": {
+                      backgroundColor: "#5a6e92",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    },
+                    "& .ag-row-hover": {
+                      backgroundColor: "#475980 !important",
+                    },
+                  }
+                : {
+                    "& .ag-cell, & .ag-header-cell-label, & .ag-header-cell": {
+                      color: "#4d4d4d",
+                      fontSize: "15px",
+                    },
+                    // Default light mode overrides (optional)
+                    "& .ag-row-hover": {
+                      backgroundColor: "#f5f5f5 !important",
+                    },
+                  }),
             }}
           >
             {isLoading && (
@@ -319,7 +357,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: "rgba(255,255,255,0.7)",
+                  backgroundColor: "rgba(255,255,255,0.1)",
                   width: "100%",
                   height: "100%",
                 }}
@@ -327,7 +365,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 <CircularProgress
                   size={40}
                   thickness={4}
-                  sx={{ color: "#1c69d4" }}
+                  sx={{ color: "#90caf9" }}
                 />
               </Box>
             )}
@@ -352,8 +390,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               pagination
               paginationPageSize={10}
               suppressDragLeaveHidesColumns
-              suppressMenuHide={true} // ← ensures legacy menu icon always visible
-              columnMenu="legacy" // ← use legacy tabbed menu
+              columnMenu="legacy"
               domLayout="normal"
               overlayNoRowsTemplate={
                 isLoading ? "<span></span>" : "<span>No data available.</span>"

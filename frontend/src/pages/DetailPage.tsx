@@ -8,7 +8,7 @@ export default function DetailPage() {
   const [car, setCar] = useState<any>(null);
 
   useEffect(() => {
-    axios.get(`http://127.0.0.1:5000/data/${id}`).then((res) => {
+    axios.get(`http://127.0.0.1:5050/data/${id}`).then((res) => {
       setCar(res.data);
     });
   }, [id]);

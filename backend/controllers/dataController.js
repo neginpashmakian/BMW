@@ -30,14 +30,13 @@ exports.filterData = async (req, res) => {
   const { field, operator, value } = req.body;
   const query = {};
 
-  const fieldName = field.toLowerCase(); // Normalize field
+  const fieldName = field; // Normalize field
   const isNumericField = ["range_km"].includes(fieldName); // You can expand this
 
   if (isNumericField) {
     if (operator === "equals") {
       query[fieldName] = Number(value);
     }
-    // You can add support for >, <, >=, etc. here later
   } else {
     if (operator === "contains")
       query[fieldName] = { $regex: value, $options: "i" };

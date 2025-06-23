@@ -15,9 +15,7 @@ import HomePage from "./pages/HomePage";
 
 export default function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [mode, setMode] = useState<"light" | "dark">(
-    prefersDarkMode ? "dark" : "light"
-  );
+  const [mode, setMode] = useState<"light" | "dark">("light");
 
   const theme = useMemo(
     () =>
@@ -27,8 +25,8 @@ export default function App() {
           ...(mode === "dark"
             ? {
                 background: {
-                  default: "#121212",
-                  paper: "#1e1e1e",
+                  default: "#151525",
+                  paper: "#364566",
                 },
               }
             : {

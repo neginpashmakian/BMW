@@ -1,4 +1,3 @@
-// components/Footer.tsx
 import {
   Box,
   Link,
@@ -11,6 +10,7 @@ import {
 export default function Footer() {
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+  const isDark = theme.palette.mode === "dark";
 
   return (
     <Box
@@ -19,9 +19,10 @@ export default function Footer() {
         mt: 6,
         py: 3,
         px: 2,
-        backgroundColor: "#f4f4f4",
         textAlign: "center",
-        borderTop: "1px solid #ccc",
+        backgroundColor: isDark ? "#27304a" : "#f4f4f4",
+        color: isDark ? theme.palette.text.primary : "inherit",
+        borderTop: `1px solid ${isDark ? "#444c5e" : "#ccc"}`,
       }}
     >
       <Typography variant="subtitle1" color="text.primary">

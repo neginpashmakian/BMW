@@ -1,5 +1,5 @@
 import { Box, Button, Card, Divider, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 export default function DetailView({ car }: { car: any }) {
   const navigate = useNavigate();

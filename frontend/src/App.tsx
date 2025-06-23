@@ -7,7 +7,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useMemo, useState } from "react";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import DetailPage from "./pages/DetailPage";

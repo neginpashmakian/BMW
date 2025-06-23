@@ -1,5 +1,3 @@
-// DataGridTable.tsx – Dark mode compatible
-
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
@@ -18,30 +16,41 @@ import type { ColumnMenuTab } from "ag-grid-community";
 import {
   ClientSideRowModelModule,
   ColDef,
+  CsvExportModule,
   GridApi,
   GridReadyEvent,
   ModuleRegistry,
+  PaginationModule,
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import { AgGridReact } from "ag-grid-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  CsvExportModule,
+  PaginationModule,
+]);
 
 export default function DataGridTable({ cars }: { cars: any[] }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const gridRef = useRef<AgGridReact>(null);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [baseData, setBaseData] = useState<any[]>(cars);
+  const [filteredData, setFilteredData] = useState<any[]>(cars);
   const [searchTerm, setSearchTerm] = useState("");
   const [field, setField] = useState("Brand");
   const [operator, setOperator] = useState("contains");
   const [value, setValue] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    setBaseData(cars);
+    setFilteredData(cars);
+  }, [cars]);
   const fieldMap: Record<string, string> = {
     Brand: "Brand",
     Model: "Model",
@@ -60,29 +69,31 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
   ];
 
   const showLoading = () => setIsLoading(true);
-  const hideOverlay = () => {
+
+  const hideOverlay = useCallback(() => {
     setIsLoading(false);
     gridApi?.hideOverlay();
-  };
-
+  }, [gridApi]);
+  // Search logic applies on baseData
   useEffect(() => {
     if (!gridApi) return;
     showLoading();
     const timeout = setTimeout(() => {
       const lower = searchTerm.toLowerCase();
       const result = searchTerm
-        ? cars.filter(
+        ? baseData.filter(
             (car) =>
               car.Brand?.toLowerCase().includes(lower) ||
               car.Model?.toLowerCase().includes(lower)
           )
-        : cars;
+        : baseData;
       setFilteredData(result);
       hideOverlay();
     }, 400);
     return () => clearTimeout(timeout);
-  }, [searchTerm, cars, gridApi]);
+  }, [searchTerm, baseData, gridApi, hideOverlay]);
 
+  // Backend filter updates baseData
   const handleBackendFilter = async () => {
     if (!gridApi) return;
     showLoading();
@@ -93,7 +104,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
         body: JSON.stringify({ field: fieldMap[field], operator, value }),
       });
       const data = await resp.json();
-      setFilteredData(data);
+      setBaseData(data); // now search runs on this
     } catch (err) {
       console.error(err);
     } finally {
@@ -103,6 +114,11 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
 
   const handleDelete = (id: string) => {
     setFilteredData((prev) => prev.filter((row) => row._id !== id));
+    setBaseData((prev) => prev.filter((row) => row._id !== id));
+  };
+
+  const updatePagination = () => {
+    if (!gridRef.current?.api) return;
   };
 
   const columnDefs: ColDef[] = useMemo(() => {
@@ -187,18 +203,12 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
 
   return (
     <Box
-      sx={{
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-        px: 2,
-      }}
+      sx={{ width: "100%", display: "flex", justifyContent: "center", px: 2 }}
     >
       <Paper
         elevation={3}
         sx={{
           width: "100%",
-          maxWidth: 1300,
           px: 4,
           py: 4,
           borderRadius: 3,
@@ -206,14 +216,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           color: theme.palette.text.primary,
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: "bold",
-            color: theme.palette.text.primary,
-            paddingBottom: 2,
-          }}
-        >
+        <Typography variant="h5" sx={{ fontWeight: "bold", paddingBottom: 2 }}>
           Electric Car Dashboard
         </Typography>
 
@@ -272,11 +275,11 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             sx={{
               minWidth: 100,
               backgroundColor:
-                theme.palette.mode === "dark" ? "#264B8C" : "#1976d2", // dark : light
+                theme.palette.mode === "dark" ? "#264B8C" : "#1976d2",
               color: "#fff",
               "&:hover": {
                 backgroundColor:
-                  theme.palette.mode === "dark" ? "#1e3a6b" : "#1565c0", // hover colors
+                  theme.palette.mode === "dark" ? "#1e3a6b" : "#1565c0",
               },
             }}
             onClick={handleBackendFilter}
@@ -288,6 +291,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             color="inherit"
             sx={{ minWidth: 100 }}
             onClick={() => {
+              setBaseData(cars);
               setFilteredData(cars);
               setField("Brand");
               setOperator("contains");
@@ -298,19 +302,29 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           >
             Reset
           </Button>
+          <Button
+            variant="outlined"
+            color="success"
+            sx={{ minWidth: 100, marginLeft: "auto" }}
+            onClick={() => {
+              if (gridApi) {
+                gridApi.exportDataAsCsv({ fileName: "electric_cars.csv" });
+              }
+            }}
+          >
+            Export CSV
+          </Button>
         </Stack>
 
         <Box sx={{ width: "100%", overflow: "hidden" }}>
           <Box
             className="ag-theme-alpine"
             sx={{
-              height: 400,
+              height: "100%",
               width: "100%",
               fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
               fontSize: "13px",
-
               borderRadius: 2,
-
               ...(theme.palette.mode === "dark"
                 ? {
                     color: theme.palette.text.primary,
@@ -339,7 +353,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                       color: "#4d4d4d",
                       fontSize: "15px",
                     },
-                    // Default light mode overrides (optional)
                     "& .ag-row-hover": {
                       backgroundColor: "#f5f5f5 !important",
                     },
@@ -351,7 +364,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                 sx={{
                   position: "absolute",
                   zIndex: 2,
-                  top: "50%",
+                  top: "80%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                   display: "flex",
@@ -372,6 +385,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
             <AgGridReact
               ref={gridRef}
               onGridReady={onGridReady}
+              domLayout="autoHeight"
+              onFirstDataRendered={updatePagination}
+              onPaginationChanged={updatePagination}
               rowData={filteredData}
               columnDefs={columnDefs}
               defaultColDef={{
@@ -388,10 +404,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               }}
               animateRows
               pagination
-              paginationPageSize={10}
+              paginationPageSize={20}
               suppressDragLeaveHidesColumns
               columnMenu="legacy"
-              domLayout="normal"
               overlayNoRowsTemplate={
                 isLoading ? "<span></span>" : "<span>No data available.</span>"
               }

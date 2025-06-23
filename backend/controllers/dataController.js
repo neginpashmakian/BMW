@@ -4,7 +4,7 @@ exports.getAllData = async (req, res) => {
   const data = await CarData.find();
   console.log("GET /data called");
   console.log(`Returning ${data.length} items`);
-  res.json(data); // ✅ Only one response call
+  res.json(data);
 };
 
 exports.getDataById = async (req, res) => {
@@ -22,16 +22,35 @@ exports.searchData = async (req, res) => {
   const regex = new RegExp(q, "i");
   const data = await CarData.find({
     $or: [{ brand: regex }, { model: regex }],
-  }); // adjust fields
+  });
   res.json(data);
 };
 
 exports.filterData = async (req, res) => {
   const { field, operator, value } = req.body;
-  const query = {};
 
-  const fieldName = field; // Normalize field
-  const isNumericField = ["range_km"].includes(fieldName); // You can expand this
+  // ✅ Step 1: Validate required fields
+  if (!field || !operator) {
+    return res.status(400).json({ error: "Missing field or operator." });
+  }
+
+  const validOperators = [
+    "contains",
+    "equals",
+    "starts with",
+    "ends with",
+    "is empty",
+  ];
+  if (!validOperators.includes(operator)) {
+    return res.status(400).json({ error: "Invalid operator." });
+  }
+
+  // ✅ Step 2: Build query
+  const query = {};
+  const fieldName = field;
+  const isNumericField = ["range_km", "efficiency_whkm"].includes(
+    fieldName.toLowerCase()
+  );
 
   if (isNumericField) {
     if (operator === "equals") {
@@ -48,6 +67,7 @@ exports.filterData = async (req, res) => {
     else if (operator === "is empty") query[fieldName] = "";
   }
 
+  // ✅ Step 3: Fetch results
   const data = await CarData.find(query);
   res.json(data);
 };

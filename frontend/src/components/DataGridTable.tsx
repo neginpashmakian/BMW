@@ -316,6 +316,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               fontFamily: '"Roboto", "Helvetica Neue", "Arial", sans-serif',
               fontSize: "13px",
               borderRadius: 2,
+
               ...(theme.palette.mode === "dark"
                 ? {
                     color: theme.palette.text.primary,
@@ -353,6 +354,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                     },
                     "& .ag-row-hover": {
                       backgroundColor: "#f5f5f5 !important",
+                    },
+                    "&.ag-paging-panel": {
+                      padding: "8px 16px !important",
                     },
                   }),
             }}

@@ -29,7 +29,6 @@ exports.searchData = async (req, res) => {
 exports.filterData = async (req, res) => {
   const { field, operator, value } = req.body;
 
-  // ✅ Step 1: Validate required fields
   if (!field || !operator) {
     return res.status(400).json({ error: "Missing field or operator." });
   }
@@ -45,7 +44,6 @@ exports.filterData = async (req, res) => {
     return res.status(400).json({ error: "Invalid operator." });
   }
 
-  // ✅ Step 2: Build query
   const query = {};
   const fieldName = field;
   const isNumericField = ["range_km", "efficiency_whkm"].includes(
@@ -67,7 +65,6 @@ exports.filterData = async (req, res) => {
     else if (operator === "is empty") query[fieldName] = "";
   }
 
-  // ✅ Step 3: Fetch results
   const data = await CarData.find(query);
   res.json(data);
 };

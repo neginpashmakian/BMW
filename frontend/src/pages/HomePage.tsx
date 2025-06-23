@@ -25,7 +25,7 @@ export default function HomePage({ toggleTheme }: { toggleTheme: () => void }) {
   }, []);
 
   return (
-    <Container sx={{ mt: 5 }} maxWidth={false}>
+    <Container maxWidth={false}>
       <DataGridTable cars={cars} />
     </Container>
   );

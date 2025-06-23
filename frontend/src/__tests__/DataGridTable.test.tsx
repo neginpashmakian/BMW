@@ -36,7 +36,6 @@ describe("DataGridTable component", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Electric Car Dashboard/i)).toBeInTheDocument();
     expect(
       screen.getByLabelText(/Search by Brand or Model/i)
     ).toBeInTheDocument();

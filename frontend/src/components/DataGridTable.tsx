@@ -9,7 +9,6 @@ import {
   Stack,
   TextField,
   Tooltip,
-  Typography,
   useTheme,
 } from "@mui/material";
 import type { ColumnMenuTab } from "ag-grid-community";
@@ -27,7 +26,8 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 import { AgGridReact } from "ag-grid-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-
+import ConditionalTooltip from "./ConditionalTooltip";
+import HeaderTooltipRenderer from "./HeaderTooltipRenderer";
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
   CsvExportModule,
@@ -129,8 +129,7 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
       .map(
         (key): ColDef => ({
           field: key,
-          headerName: key.replace(/_/g, " "),
-          headerTooltip: key.replace(/_/g, " "),
+          headerComponent: "headerTooltipRenderer",
           sortable: true,
           filter: true,
           resizable: true,
@@ -138,15 +137,11 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           flex: 1,
           minWidth: 120,
           suppressMovable: false,
-          menuTabs: [
-            "filterMenuTab",
-            "generalMenuTab",
-            "columnsMenuTab",
-          ] as ColumnMenuTab[],
+          menuTabs: ["filterMenuTab", "generalMenuTab", "columnsMenuTab"],
           cellRenderer: (params: any) => (
-            <Tooltip title={params.value}>
+            <ConditionalTooltip content={params.value}>
               <span>{params.value}</span>
-            </Tooltip>
+            </ConditionalTooltip>
           ),
         })
       );
@@ -216,10 +211,6 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
           color: theme.palette.text.primary,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: "bold", paddingBottom: 2 }}>
-          Electric Car Dashboard
-        </Typography>
-
         <TextField
           label="Search by Brand or Model"
           fullWidth
@@ -339,6 +330,9 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                     },
                     "& .ag-cell, & .ag-header-cell-label, & .ag-header-cell": {
                       color: "#fff",
+                      alignItems: "center",
+                      alignContent: "center",
+                      alignSelf: "center",
                     },
                     "& .ag-row": {
                       backgroundColor: "#5a6e92",
@@ -352,6 +346,10 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
                     "& .ag-cell, & .ag-header-cell-label, & .ag-header-cell": {
                       color: "#4d4d4d",
                       fontSize: "15px",
+                      alignItems: "center",
+
+                      alignContent: "center",
+                      alignSelf: "center",
                     },
                     "& .ag-row-hover": {
                       backgroundColor: "#f5f5f5 !important",
@@ -383,9 +381,14 @@ export default function DataGridTable({ cars }: { cars: any[] }) {
               </Box>
             )}
             <AgGridReact
+              components={{
+                headerTooltipRenderer: HeaderTooltipRenderer,
+              }}
               ref={gridRef}
               onGridReady={onGridReady}
               domLayout="autoHeight"
+              getRowHeight={() => 52}
+              headerHeight={52}
               onFirstDataRendered={updatePagination}
               onPaginationChanged={updatePagination}
               rowData={filteredData}

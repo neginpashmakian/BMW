@@ -34,7 +34,6 @@ The backend connects to a MongoDB Atlas database to store and manage data, and t
   - CORS for cross-origin requests
 - **Other:**
   - Docker (for containerization)
-  - dotenv for environment variables
 
 ## Backend Setup
 

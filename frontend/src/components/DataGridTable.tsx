@@ -27,13 +27,13 @@ import { AgGridReact } from "ag-grid-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import ConditionalTooltip from "./ConditionalTooltip";
+import "./DataGridTable.css";
 import HeaderTooltipRenderer from "./HeaderTooltipRenderer";
 ModuleRegistry.registerModules([
   ClientSideRowModelModule,
   CsvExportModule,
   PaginationModule,
 ]);
-
 export default function DataGridTable({ cars }: { cars: any[] }) {
   const theme = useTheme();
   const navigate = useNavigate();

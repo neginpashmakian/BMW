@@ -59,14 +59,14 @@ export default function Footer() {
         </Link>
       </Stack>
 
-      <Typography
+      {/* <Typography
         variant="caption"
         color="text.secondary"
         mt={1}
         display="block"
       >
         © {new Date().getFullYear()} Negin Pashmakian. All rights reserved.
-      </Typography>
+      </Typography> */}
     </Box>
   );
 }

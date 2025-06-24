@@ -1,46 +1,113 @@
-# Getting Started with Create React App
+# BMW IT Internship - Backend and Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This repository contains the backend and frontend of the BMW Battery Development IT Internship project. The project demonstrates a full-stack application using modern web technologies, including React, Node.js, and MongoDB, with a focus on battery development.
 
-## Available Scripts
+## Table of Contents
 
-In the project directory, you can run:
+- [Project Overview](#project-overview)
+- [Technologies](#technologies)
+- [Backend Setup](#backend-setup)
+- [Frontend Setup](#frontend-setup)
+- [Docker Setup](#docker-setup)
+- [API Endpoints](#api-endpoints)
 
-### `npm start`
+## Project Overview
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+This project simulates an electric vehicle battery development platform for BMW. It consists of:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- A **frontend** built with **React.js** and **Material UI** to create a dynamic user interface.
+- A **backend** built with **Node.js**, **Express**, and **MongoDB** to handle database interactions and API requests.
 
-### `npm test`
+The backend connects to a MongoDB Atlas database to store and manage data, and the frontend allows users to interact with it in an intuitive way.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Technologies
 
-### `npm run build`
+- **Frontend:**
+  - React.js
+  - Material UI
+  - Axios for API calls
+  - React Router for routing
+- **Backend:**
+  - Node.js
+  - Express.js
+  - MongoDB (using Mongoose ORM)
+  - CORS for cross-origin requests
+- **Other:**
+  - Docker (for containerization)
+  - dotenv for environment variables
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Backend Setup
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/neginpashmakian/BMW.git
+   cd BMW/backend
+   Install dependencies:
+   ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+bash
+Copy
+npm install
+Create a .env file:
+In the backend folder, create a .env file and add your MongoDB URI and port:
 
-### `npm run eject`
+env
+Copy
+PORT=5050
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.snmr7a5.mongodb.net/bmw-db?retryWrites=true&w=majority
+Run the backend:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+bash
+Copy
+node server.js
+The backend server should now be running on http://localhost:5050.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Frontend Setup
+Navigate to the frontend folder:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+bash
+Copy
+cd ../frontend
+Install dependencies:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+bash
+Copy
+npm install
+Run the frontend:
 
-## Learn More
+bash
+Copy
+npm start
+The frontend should now be running on http://localhost:3000.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Docker Setup
+Build and run the containers with Docker Compose:
+In the project root directory (where docker-compose.yml is located), run the following command:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+bash
+Copy
+docker-compose up --build
+This will build the Docker images and start the frontend and backend services.
+
+Access the application:
+
+Frontend: http://localhost:3000
+
+Backend: http://localhost:5050
+
+API Endpoints
+The backend exposes the following endpoints:
+
+GET / - A simple test route to check if the server is running.
+
+POST /data/filter - Accepts filtering options to retrieve filtered data from the MongoDB database.
+
+Example Request to Filter Data:
+
+json
+Copy
+{
+"field": "Brand",
+"operator": "contains",
+"value": "BMW"
+}
